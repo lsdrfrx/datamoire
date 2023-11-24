@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="datamoire",
@@ -7,5 +7,5 @@ setup(
     url="https://github.com/lsdrfrx/datamoire",
     author="Christian Guetnga",
     author_email="lsdrfrx@gmail.com",
-    packages=["datamoire"],
+    packages=find_packages(),
 )
