@@ -1,5 +1,5 @@
 **/*.ipynb_checkpoints
 datamoire.egg-info
 *__pycache__/
-dict/
+dist/
 build/
