@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from torchmetrics import Accuracy
 from dataclasses import dataclass, asdict, field
+import pandas as pd
 
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -28,7 +29,7 @@ class ParameterTuner:
         self.N_EPOCHS = 200
         self.model = model
         self.params_list = params_list
-        self.summary_dict = dict()
+        self.summary = pd.DataFrame(columns=["candidates", "best loss", "best metric"])
         self.N_EPOCHS = 200
         self.device = device
 
@@ -50,22 +51,9 @@ class ParameterTuner:
 
 
     def summary(self):
-        """Вывод результатов перебора параметров"""
+        pass
 
-        for candidate, result in self.summary_dict.items():
-            print(f"{candidate} with parameters:")
-            print(result["parameters"])
-            print(f'Mean test accuracy: {result["mean_accuracy"]}')
-            result["plot"].show()
-            print("\n==============================================\n")
-
-        best = sorted(
-            self.summary_dict.items(), key=lambda x: x[1]["mean_accuracy"], reverse=True
-        )[0]
-        print(f'Best: {best[0]} with mean test accuracy {best[1]["mean_accuracy"]}')
-        print(best[1]["parameters"])
-
-
+    
     def fit(self, data):
         print(f"Train epochs count: {ParameterTuner._N_EPOCHS}\n")
         for i, params in enumerate(self.params_list):
