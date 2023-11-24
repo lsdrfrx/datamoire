@@ -1,11 +1,13 @@
+from ._utils import optimizers
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from torchmetrics import Accuracy
 from dataclasses import dataclass, asdict, field
 import pandas as pd
+from typing import Any
 
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -17,7 +19,7 @@ class Parameters:
     HIDDEN_DIM: list = field(default=None)
     DROPOUT: float = field(default=None)
     LSTM_LAYERS: int = field(default=None)
-    OPTIMIZER: str = field(default=None)
+    OPTIMIZER: Any = field(default=None)
     LEARNING_RATE: float = field(default=None)
 
     def __repr__(self):
@@ -26,13 +28,20 @@ class Parameters:
 
 class ParameterTuner:
     def __init__(self, model, params_list, device=torch.device("cpu")):
-        self.N_EPOCHS = 200
+        self.summary = pd.DataFrame(columns=["candidates", "best loss", "best metric"])
+
         self.model = model
         self.params_list = params_list
-        self.summary = pd.DataFrame(columns=["candidates", "best loss", "best metric"])
         self.N_EPOCHS = 200
+        self.data = None
         self.device = device
 
+        self.criterion = None
+
+
+    def set_criterion(self, criterion):
+        self.criterion = criterion
+    
 
     def set_epochs(self, N_EPOCHS):
         self.N_EPOCHS = N_EPOCHS
@@ -53,22 +62,21 @@ class ParameterTuner:
     def summary(self):
         pass
 
-    
+
     def fit(self, data):
-        print(f"Train epochs count: {ParameterTuner._N_EPOCHS}\n")
+        print(f"Train epochs count: {self.N_EPOCHS}\n")
         for i, params in enumerate(self.params_list):
             print(f"Training canditate #{i} with:")
             print(params)
-
-            train, test = self._define_loaders(params, X_train, y_train, X_test, y_test)
 
             model = self.model(
                 dropout=params.DROPOUT,
                 n_hidden=params.N_HIDDEN,
                 lstm_layers=params.LSTM_LAYERS,
-            ).to(device)
-            optimizer = optim.Adam(model.parameters(), lr=3e-4)
-            criterion = nn.BCELoss()
+            ).to(self.device)
+                
+            optimizer = params.OPTIMIZER(model.parameters(), lr=params.LEARNING_RATE)
+            criterion = self.criterion()
 
             train_losses = []
             test_losses = []
@@ -79,7 +87,7 @@ class ParameterTuner:
             accuracy = Accuracy(task="multiclass", num_classes=2).to(device)
 
             for epoch in trange(
-                ParameterTuner._N_EPOCHS, desc=f"Candidate #{i} training"
+                self.N_EPOCHS, desc=f"Candidate #{i} training"
             ):
                 total_acc_train = 0
                 total_loss_train = 0
